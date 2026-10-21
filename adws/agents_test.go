@@ -65,8 +65,8 @@ func cellList(cell string) []string {
 }
 
 type agentDef struct {
-	name, model             string
-	tools, disallowed, uses []string
+	name, model                string
+	tools, disallowed, preload []string
 }
 
 func readAgent(t *testing.T, path string) agentDef {
@@ -89,6 +89,15 @@ func readAgent(t *testing.T, path string) agentDef {
 		t.Fatalf("%s: le falta la descripción o el prompt", path)
 	}
 	return agentDef{fields["name"], fields["model"], cellList(fields["tools"]), cellList(fields["disallowedTools"]), cellList(fields["skills"])}
+}
+
+func contains(items []string, item string) bool {
+	for _, i := range items {
+		if i == item {
+			return true
+		}
+	}
+	return false
 }
 
 func TestAgentsMatchTheRoles(t *testing.T) {
@@ -149,13 +158,17 @@ func TestAgentsMatchTheRoles(t *testing.T) {
 			t.Errorf("el rol %s no está en la tabla de agentes del ejecutor", role)
 			continue
 		}
-		if !reflect.DeepEqual(a.tools, cellList(row[0])) || !reflect.DeepEqual(a.disallowed, cellList(row[1])) || !reflect.DeepEqual(a.uses, cellList(row[2])) {
-			t.Errorf("%s: tools %v, disallowedTools %v y skills %v no son los del ejecutor: %v", role, a.tools, a.disallowed, a.uses, row)
+		if !reflect.DeepEqual(a.tools, cellList(row[0])) || !reflect.DeepEqual(a.disallowed, cellList(row[1])) || !reflect.DeepEqual(a.preload, cellList(row[2])) {
+			t.Errorf("%s: tools %v, disallowedTools %v y skills precargadas %v no son los del ejecutor: %v", role, a.tools, a.disallowed, a.preload, row)
 		}
-		for _, skill := range a.uses {
+		usable := cellList(row[3])
+		for _, skill := range append(append([]string{}, a.preload...), usable...) {
 			if _, err := os.Stat(filepath.Join(skillsDir, skill, "SKILL.md")); err != nil {
 				t.Errorf("%s: la skill %s no existe", role, skill)
 			}
+		}
+		if len(usable) > 0 && !contains(a.tools, "Skill") {
+			t.Errorf("%s usa skills con Skill, y no tiene esa herramienta", role)
 		}
 		for _, tool := range a.tools {
 			if tool == "Agent" {

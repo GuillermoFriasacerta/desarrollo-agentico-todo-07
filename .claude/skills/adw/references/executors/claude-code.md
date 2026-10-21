@@ -12,17 +12,20 @@ Cómo se lanza en Claude Code cada rol del [catálogo](../roles.md), con qué mo
 
 ## Agentes
 
-Cada rol, salvo `coordinator`, es un agente del proyecto en `.claude/agents/<rol>.md`. Su definición fija el modelo de su nivel, sus herramientas y las skills que trae cargadas, y su prompt dice lo estable del rol: qué es, qué no recibe y qué no toca.
+Cada rol, salvo `coordinator`, es un agente del proyecto en `.claude/agents/<rol>.md`. Su definición fija el modelo de su nivel, sus herramientas y sus skills, y su prompt dice lo estable del rol: qué es, qué no recibe y qué no toca.
 
-| Rol | Herramientas | Sin | Skills |
-| --- | --- | --- | --- |
-| `planner` | Read, Glob, Grep, Bash, Write, Skill | Edit | `feature`, `bug`, `chore` |
-| `verification-planner` | Read, Glob, Grep, Bash, Write | Edit | — |
-| `implementer` | Read, Glob, Grep, Bash, Write, Edit, Skill | — | `implement` |
-| `checker` | Read, Glob, Grep, Bash, Write, Skill | Edit | `check` |
-| `evidence-collector` | Read, Glob, Grep, Bash, Write, Skill | Edit | `verify`, `playwright-cli` |
-| `judge` | Read, Glob, Grep, Bash, Write, Skill | Edit | `judge` |
-| `documenter` | Read, Glob, Grep, Bash, Write, Edit, Skill | — | `document` |
+| Rol | Herramientas | Sin | Precarga | Usa con `Skill` |
+| --- | --- | --- | --- | --- |
+| `planner` | Read, Glob, Grep, Bash, Write, Skill | Edit | — | `feature`, `bug`, `chore` |
+| `verification-planner` | Read, Glob, Grep, Bash, Write | Edit | — | — |
+| `implementer` | Read, Glob, Grep, Bash, Write, Edit, Skill | — | `implement` | — |
+| `checker` | Read, Glob, Grep, Bash, Write, Skill | Edit | `check` | — |
+| `evidence-collector` | Read, Glob, Grep, Bash, Write, Skill | Edit | `verify`, `playwright-cli` | — |
+| `judge` | Read, Glob, Grep, Bash, Write, Skill | Edit | `judge` | — |
+| `documenter` | Read, Glob, Grep, Bash, Write, Edit, Skill | — | `document` | — |
+
+- **Precarga** pone la skill entera en el contexto del agente, que la relee en cada turno: es para la que el rol siempre aplica.
+- **Usa con `Skill`** es para las que dependen del caso, como la del tipo de la petición. El rol solo carga la que toca, y el encargo dice cuál.
 
 Ninguno tiene la herramienta `Agent`: un rol no lanza otros. Si necesitas apoyo para explorar o diagnosticar, lánzalo tú.
 
@@ -31,7 +34,7 @@ Ninguno tiene la herramienta `Agent`: un rol no lanza otros. Si necesitas apoyo 
 - Con la herramienta `Agent` y `subagent_type: <rol>`. Sin el parámetro `model`: lo pone el agente.
 - Pasa `model` solo para subir el nivel de un rol en un caso concreto, y apunta el motivo en el panel. El de la llamada gana al de la definición.
 - El encargo lleva solo lo del caso: la issue, la rama, las afirmaciones, el directorio de evidencias, la base. Lo del rol ya está en el agente. Recuérdale que nadie le va a responder y que devuelva sus dudas y bloqueos en su informe.
-- Las skills precargadas llegan sin argumentos: donde la skill dice «recibe en `$ARGUMENTS`», el encargo hace de argumento. Si el rol tiene varias, como `planner`, dile cuál aplicar.
+- Las skills precargadas llegan sin argumentos: donde la skill dice «recibe en `$ARGUMENTS`», el encargo hace de argumento. Si el rol puede usar varias con `Skill`, como `planner`, dile cuál aplicar según el tipo de la petición.
 - Puedes lanzar en paralelo lo independiente y esperar a todos, como dice la skill.
 
 ## Qué impone Claude Code y qué no
