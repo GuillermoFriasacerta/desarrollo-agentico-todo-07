@@ -17,7 +17,7 @@ Cada rol, salvo `coordinator`, es un agente del proyecto en `.claude/agents/<rol
 | Rol | Herramientas | Sin | Precarga | Usa con `Skill` |
 | --- | --- | --- | --- | --- |
 | `planner` | Read, Glob, Grep, Bash, Write, Skill | Edit | — | `feature`, `bug`, `chore` |
-| `verification-planner` | Read, Glob, Grep, Bash, Write | Edit | — | — |
+| `verification-planner` | Read, Glob, Grep, Bash, Write, Skill | Edit | — | `feature-plan-verification`, `bug-plan-verification`, `chore-plan-verification` |
 | `implementer` | Read, Glob, Grep, Bash, Write, Edit, Skill | — | `implement` | — |
 | `checker` | Read, Glob, Grep, Bash, Write, Skill | Edit | `check` | — |
 | `evidence-collector` | Read, Glob, Grep, Bash, Write, Skill | Edit | `verify`, `playwright-cli` | — |

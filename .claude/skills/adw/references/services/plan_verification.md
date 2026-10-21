@@ -1,6 +1,7 @@
 ---
 name: plan_verification
-description: Convierte la especificación en un plan de verificación con afirmaciones refutables antes de probar nada, o lo amplía con lo que pide una revisión del humano.
+description: Convierte la especificación en un plan de verificación con afirmaciones refutables antes de probar nada, o lo amplía con lo que pide una revisión del humano. El perfil del plan depende del tipo de la petición.
+skills: [feature-plan-verification, bug-plan-verification, chore-plan-verification]
 ---
 
 # plan_verification
@@ -16,7 +17,7 @@ description: Convierte la especificación en un plan de verificación con afirma
 ## Qué hace
 
 1. Parte de la especificación, no del plan de implementación: no lo uses. Así la validación puede detectar un cambio que cumple el plan pero no el criterio. Puedes leer el código de la rama base para concretar pantallas, rutas o datos, pero no ejecutes ni modifiques nada.
-2. Convierte cada criterio, aclaración y petición en afirmaciones refutables. Añade las que la especificación implica: casos límite y negativos, regresiones del comportamiento existente y lo que pide cada dimensión.
+2. Convierte cada criterio, aclaración y petición en afirmaciones refutables. Añade solo las que el perfil de su tipo permite (paso 5).
 3. Para cada afirmación fija, antes de ejecutar nada:
 
    | Campo | Contenido |
@@ -31,12 +32,11 @@ description: Convierte la especificación en un plan de verificación con afirma
    | Bloqueante | Si su fallo rechaza el cambio o solo se informa |
 
 4. Elige el método con estas reglas: si se puede automatizar, se automatiza, y el LLM no juzga lo que un test puede decidir; lo automatizado prepara el juicio, extrayendo el material que el LLM juzga; lo que no puede decidir ni el código ni el LLM (gusto, decisiones de producto, interpretaciones de algo ambiguo) es verificación humana y va a la lista de revisión de la propuesta.
-5. Incluye siempre:
-   - **Estructural:** los gates de formato, análisis y compilación, bloqueantes, y la imagen de Docker, informativa; el juicio del diff con las rúbricas de estructura de las convenciones.
-   - **Funcional:** la suite completa sin regresiones, con los tests de navegador, bloqueante, y, para cada test nuevo que demuestra un criterio, su ejecución en rojo sobre la base y en verde sobre el cambio. En un bug, el test de regresión es obligatorio. Si el criterio depende del navegador, como el JavaScript de `public/assets/`, el test que lo demuestra es de navegador: uno de Go no ejecuta ese código y pasaría también en la base.
-   - **Fidelidad:** la cobertura (cada criterio con sus afirmaciones y, si tiene comportamiento observable, un test asociado), la contención (cada cambio del diff trazado a un criterio) y la documentación al día (cada documento de `docs/knowledge/` y `docs/procedures/` que describe lo que cambia, actualizado; nombra los que ya sabes que lo describen), las tres bloqueantes.
-
-   Las verificaciones humanas y las declaraciones de que algo no tiene comportamiento observable nunca son bloqueantes.
+5. Aplica la skill del tipo de la petición, `feature-plan-verification`, `bug-plan-verification` o `chore-plan-verification` (`.claude/skills/<tipo>-plan-verification/SKILL.md`): fija qué se incluye siempre, qué no entra y cómo se dimensiona el plan. Si el tipo no coincide con lo que pide la especificación, no decidas: devuélvelo como duda funcional. Lo común a todos los tipos:
+   - Cada grupo mecánico es una sola afirmación: los gates, la suite completa.
+   - Lo que el acta deduce de las demás, como que cada criterio queda cubierto, no es una afirmación.
+   - Las verificaciones humanas y las declaraciones de que algo no tiene comportamiento observable nunca son bloqueantes.
+   - Lo que decides no comprobar se anota en «Supuestos» como «No se comprueba: …».
 6. Fija la evidencia según el método:
 
    | Método | Evidencia |
@@ -51,7 +51,7 @@ description: Convierte la especificación en un plan de verificación con afirma
    | Juicio del LLM | Acta de juicio: rúbrica, cita literal, razonamiento por criterio, refutación, confianza y procedencia |
 
 7. Para cada criterio y cada petición, fija su **prueba para el revisor**: la evidencia de una de sus afirmaciones bloqueantes que lo demuestra a la vista, la que verá el humano en la propuesta. Un vídeo si es un recorrido, una captura si es un estado, dos capturas si se comparan dos estados (con y sin, antes y después) o un extracto corto de salida si no tiene interfaz. Es una evidencia más, no un sustituto: la decisión sigue saliendo del valor medido.
-8. Si es una revisión, conserva las afirmaciones anteriores y añade las de las peticiones nuevas. Si una petición o una aclaración del humano cambia lo que pedía un criterio, sustituye sus afirmaciones: la anterior se queda en el plan, marcada como sustituida por la nueva. Nada más justifica quitar o suavizar una afirmación: ni un rechazo ni lo que se descubra al validar.
+8. Si es una revisión, conserva las afirmaciones anteriores y añade las de las peticiones nuevas, con el perfil del tipo: no amplíes lo demás. Si una petición o una aclaración del humano cambia lo que pedía un criterio, sustituye sus afirmaciones: la anterior se queda en el plan, marcada como sustituida por la nueva. Nada más justifica quitar o suavizar una afirmación: ni un rechazo ni lo que se descubra al validar.
 9. Si aparece un caso que la especificación no resuelve (por ejemplo, qué mostrar cuando no hay tareas), no lo decidas ni preguntes: devuélvelo como duda funcional. Si no es una duda, porque la especificación lo decide aunque no lo diga (por ejemplo, que las tareas ya guardadas no se tocan porque la petición no lo pide), anótalo como supuesto: el humano lo verá a la vista y podrá pedir otra cosa.
 10. Nombra los datos de partida y las recetas que compartan varias afirmaciones por lo que hacen («dos tareas pendientes», «escribir en un campo como el usuario»), nunca con una letra, y cítalos por ese nombre. En lo que lee el humano, no te refieras a una afirmación ni a un criterio por su identificador.
 11. Comprueba que cada criterio y cada petición tienen al menos una afirmación y su prueba para el revisor, y que cada afirmación tiene resultado esperado, condición de refutación y evidencia prevista.
