@@ -20,7 +20,8 @@ Lee la definición completa antes de decidir nada. Es la fuente de verdad: no la
 
 - [GSM](references/gsm.md): cómo se lee un ciclo de vida y cómo se evalúa. Léelo primero.
 - Artefactos, cada uno con su información, su contrato y su ciclo de vida: [Issue](references/artifacts/issue.md), [Environment](references/artifacts/environment.md), [Plan](references/artifacts/plan.md), [Change](references/artifacts/change.md), [Verification](references/artifacts/verification.md) y [Documentation](references/artifacts/documentation.md).
-- Servicios, uno por fichero, como skills: el trabajo que ejecuta un stage, sus entradas y su resultado. No dicen quién los ejecuta: eso lo decides tú. Pueden usar otras skills del proyecto: [clarify](references/services/clarify.md), [setup_environment](references/services/setup_environment.md), [teardown_environment](references/services/teardown_environment.md), [write_plan](references/services/write_plan.md), [implement](references/services/implement.md), [plan_verification](references/services/plan_verification.md), [validate](references/services/validate.md), [document](references/services/document.md), [publish](references/services/publish.md), [answer_review](references/services/answer_review.md) y [report_failure](references/services/report_failure.md).
+- Servicios, uno por fichero, como skills: el trabajo que ejecuta un stage, sus entradas y su resultado. No dicen quién los ejecuta: eso lo dicen los roles. Pueden usar otras skills del proyecto: [clarify](references/services/clarify.md), [setup_environment](references/services/setup_environment.md), [teardown_environment](references/services/teardown_environment.md), [write_plan](references/services/write_plan.md), [implement](references/services/implement.md), [plan_verification](references/services/plan_verification.md), [validate](references/services/validate.md), [document](references/services/document.md), [publish](references/services/publish.md), [answer_review](references/services/answer_review.md) y [report_failure](references/services/report_failure.md).
+- [Roles](references/roles.md): quién hace cada trabajo, con qué nivel de modelo, qué puede tocar y qué contexto no recibe.
 - [Asociaciones](references/associations.md): cómo se cablean los contratos y a qué artefacto afecta cada evento.
 - [Control](references/control.md): admisión, propiedad y turno; cuándo puede actuar el motor sobre un caso.
 
@@ -38,6 +39,16 @@ La definición no dice dónde viven los artefactos. Cada adaptador dice cómo se
 | Documentation | [GitHub](references/adapters/github.md) |
 
 Lee el adaptador de cada artefacto que toques. Todo lo que publiques, observes o proyectes pasa por él.
+
+## Ejecutor
+
+La definición tampoco dice cómo se lanza un rol. El ejecutor del arnés en el que corres lo dice: con qué modelo concreto, con qué herramientas y qué impone el arnés por construcción.
+
+| Arnés | Ejecutor |
+| --- | --- |
+| Claude Code | [Claude Code](references/executors/claude-code.md) |
+
+Léelo antes de delegar.
 
 ## 1. Interpreta el evento
 
@@ -62,12 +73,12 @@ El payload es una foto del momento en que ocurrió el evento y puede estar obsol
 1. Si el caso está libre, reclámalo. Si al reclamarlo aparece otro dueño, renuncia y termina.
 2. Proyecta como abierto el primer stage cuyo guard se cumple, o los que vayas a lanzar en paralelo. Es el candado que impide otra ejecución sobre el mismo caso.
 3. Prevé la cadena: qué stages se irán abriendo con los milestones que se alcancen, qué servicio ejecuta cada uno, quién lo realiza y en qué quiescencia quedará el caso.
-4. Refleja el workflow en el panel del caso, que se edita en su sitio: no publiques un comentario por evento. A la vista, lo que estás haciendo, la cadena prevista en palabras («validar, documentar y publicar») y adónde esperas llegar (la aclaración en la issue, la revisión de la propuesta o un fallo tras agotar los intentos). En su historial, una entrada con el evento, en una línea, y, en un comentario oculto, el estado al empezar, cada paso con su servicio, quién lo realiza y con qué modelo, el milestone que espera y el intento en curso de `max_rejections`. El adaptador dice cómo es el panel.
+4. Refleja el workflow en el panel del caso, que se edita en su sitio: no publiques un comentario por evento. A la vista, lo que estás haciendo, la cadena prevista en palabras («validar, documentar y publicar») y adónde esperas llegar (la aclaración en la issue, la revisión de la propuesta o un fallo tras agotar los intentos). En su historial, una entrada con el evento, en una línea, y, en un comentario oculto, el estado al empezar, cada paso con su servicio, su rol y su modelo, el milestone que espera y el intento en curso de `max_rejections`. El adaptador dice cómo es el panel.
 
 ## 4. Ejecuta y recompón
 
-- Ejecuta el servicio de cada stage abierto. Tú coordinas: decides si lo haces tú o lo delegas en subagentes (herramienta `Agent`), cuántos lanzar, de qué tipo y con qué encargo. Delega lo que necesita un contexto limpio o llenaría el tuyo, como planificar, implementar o verificar, y lanza otros de apoyo si te hacen falta, por ejemplo para explorar el código o diagnosticar un fallo.
-- Elige el modelo de cada subagente según lo que exija su trabajo: uno más capaz para lo que pide criterio, como planificar, planificar la verificación, juzgar con una rúbrica, refutar un hallazgo o decidir si una revisión pide cambios, y uno más ligero para lo mecánico, como ejecutar los gates o capturar evidencias. Apunta en el panel del caso qué modelo usa cada unidad.
+- Ejecuta el servicio de cada stage abierto. Tú coordinas: haces los servicios que el catálogo de [roles](references/roles.md) le da a `coordinator` y delegas los demás en su rol, como dice el ejecutor. Decides cuántas instancias lanzar y con qué encargo. Si te hacen falta, lanza otras de apoyo, por ejemplo para explorar el código o diagnosticar un fallo.
+- El modelo de cada trabajo sale de su rol: no lo elijas en cada llamada. Si un caso concreto necesita otro rol o un nivel más alto, por ejemplo un `implementer` capaz tras un fallo que no entiendes, cámbialo y apunta el motivo en el panel del caso.
 - Espera el resultado de cada subagente antes de reevaluar el caso: el siguiente stage depende de él. Lanza en paralelo solo lo independiente, como lecturas o stages sin relación entre sí (`VerificationPlanning` y `Planning`, `Teardown` y `Documenting`), espéralos a todos y no dejes que escriba más de uno a la vez en la copia de trabajo. Lo que se escribe en `.adw/` no cuenta: git lo ignora.
 - No termines la invocación con subagentes en marcha. Si terminas antes de que acaben, nadie recogerá su resultado y el caso se quedará con un stage abierto.
 - Cada subagente empieza sin tu conversación: pásale todo lo que necesita y dile que nadie le va a responder, que devuelva sus dudas y bloqueos en su informe. La proyección del estado y el control del caso (etiquetas, turno, propiedad) los mantienes tú.
@@ -75,6 +86,7 @@ El payload es una foto del momento en que ocurrió el evento y puede estar obsol
   - `setup_environment`: la copia de trabajo está en la rama del caso y `/healthz` responde.
   - `write_plan` y `plan_verification`: el comentario del plan existe en la issue y cubre lo que debía.
   - `implement`: hay diff y corresponde al plan.
+  - Cada rol que no cambia el código (ver [roles](references/roles.md)): la huella del árbol (`bash .claude/skills/adw/scripts/tree.sh`) es la misma que antes de lanzarlo. En `write_plan`, compárala después de publicar el plan y borrar su copia de trabajo; en `validate`, la de antes es la que anotas para el acta. Si cambia, es un fallo del servicio: dilo en el panel con los ficheros que cambiaron.
   - `validate`: el acta está publicada, su veredicto sigue la regla de decisión del plan y existe cada fichero de `.adw/evidence/` que citan sus comentarios ocultos.
   - `document`: el documento de cierre y su entrada en el índice, y las decisiones si hubo preguntas con opciones, están en la copia de trabajo, y nada más ha cambiado.
   - `teardown_environment`: `/healthz` ya no responde.
@@ -86,8 +98,8 @@ El payload es una foto del momento en que ocurrió el evento y puede estar obsol
 ### Verificación
 
 - `plan_verification` parte de la especificación, nunca del plan de implementación: no le pases el plan. Su stage no depende de `Planning` ni del entorno, así que puede ir en paralelo con ellos.
-- Para `validate`, lanza un verificador por dimensión en paralelo, cada uno sin contexto previo, sin el informe del implementador y solo con sus afirmaciones. El de fidelidad usa la issue como referencia y el plan de implementación solo para entender por qué existe un cambio. Dentro de cada dimensión, separa lo mecánico, ejecutar gates y afirmaciones automatizadas con un modelo ligero, del juicio con rúbrica, con un modelo capaz. Los verificadores solo escriben en `.adw/evidence/`, así que pueden ir en paralelo; pero la suite de tests la ejecuta solo uno, porque los tres comparten la base de datos de test de la copia de trabajo.
-- Cada hallazgo `blocker` de un juicio pasa por un refutador nuevo, sin contexto previo, antes de contar.
+- Para `validate`, lanza un verificador por dimensión en paralelo, cada uno sin contexto previo, sin el informe del implementador y solo con sus afirmaciones. El de fidelidad usa la issue como referencia y el plan de implementación solo para entender por qué existe un cambio. Dentro de cada dimensión, lo mecánico lo hacen `checker` (gates y material) y `evidence-collector` (afirmaciones automatizadas), y el juicio con rúbrica, `judge`. Los verificadores solo escriben en `.adw/evidence/`, así que pueden ir en paralelo; pero la suite de tests la ejecuta solo uno, porque los tres comparten la base de datos de test de la copia de trabajo.
+- Cada hallazgo `blocker` de un juicio pasa por una instancia nueva de `judge`, sin contexto previo ni el razonamiento del juicio, que intenta refutarlo antes de que cuente.
 - Espera a los tres verificadores antes de decidir. Un rechazo lleva al plan los defectos de todas las dimensiones en una sola revisión.
 - Tras un rechazo, la cadena vuelve a `Planning` sin ceder el turno. Si el rechazo alcanza `max_rejections`, `Validation` se cierra con `failed`: ejecuta `report_failure` y cede el turno. Cuando el humano lo devuelva, el contador vuelve a cero y el último rechazo llega al plan con lo que haya escrito.
 - Si un método previsto no puede ejecutarse (no arranca el navegador, no hay base de datos de test), es un fallo del servicio, no un rechazo.

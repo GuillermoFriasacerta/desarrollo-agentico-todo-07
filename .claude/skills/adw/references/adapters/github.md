@@ -92,7 +92,7 @@ El comentario de control es el sitio al que mira el humano para saber cómo va e
 
 <details><summary>Historial · <n> ejecuciones, <m> paradas</summary>
 
-- <AAAA-MM-DD hh:mm> ⏳ <el evento, en una línea> → <la cadena prevista> <!-- pasos: 1. <Artifact>.<Stage> · <servicio> · <quién lo realiza y con qué modelo> · <milestone esperado>; 2. … · intento k de <max_rejections> -->
+- <AAAA-MM-DD hh:mm> ⏳ <el evento, en una línea> → <la cadena prevista> <!-- pasos: 1. <Artifact>.<Stage> · <servicio> · <rol> · <modelo> · <milestone esperado>; 2. … · intento k de <max_rejections> -->
 - <hh:mm> ⛔ <el fallo, en una línea> · [aviso](<enlace al «te toca»>)
 - <hh:mm> ✅ <lo que se alcanzó: «validado», «propuesta publicada»>
 
@@ -101,7 +101,7 @@ El comentario de control es el sitio al que mira el humano para saber cómo va e
 
 - **El título dice el estado del caso.** Es «⏳ Trabajando: <…>» mientras ejecutas, el título del último «te toca» cuando el turno es del humano («👀 Te toca: revisar la propuesta #23») y «✅ Terminado: <propuesta integrada o descartada>» al cerrarse el caso. Con el turno del humano, las líneas «Después» y «Se espera llegar a» se cambian por «**Qué necesito:** [<lo que necesito>](<enlace al «te toca»>)».
 - **Las líneas sin contenido no aparecen.** Sin plan de verificación no hay «Planes», y sin acta no hay «Acta».
-- **El historial** tiene una entrada por ejecución y por parada, de la más antigua a la más reciente, con la fecha y la hora en UTC. Cada ejecución lleva en un comentario oculto los pasos, los servicios y los modelos del workflow compuesto, y cada recomposición, su motivo. Cuando el humano devuelve el turno, la parada dice cómo se resolvió: «→ liberaste los puertos a las 07:01».
+- **El historial** tiene una entrada por ejecución y por parada, de la más antigua a la más reciente, con la fecha y la hora en UTC. Cada ejecución lleva en un comentario oculto los pasos, los servicios, los roles y los modelos del workflow compuesto, y cada recomposición, su motivo. Cuando el humano devuelve el turno, la parada dice cómo se resolvió: «→ liberaste los puertos a las 07:01».
 - **La línea «Rama»** es el registro de la rama del caso y de su base que leen `setup_environment` y la búsqueda del PR.
 - **Cuándo se edita:** al empezar cada ejecución, cada vez que se abre un stage o se recompone la cadena, y al terminar, al ceder el turno o al alcanzar un milestone terminal. Edítalo con `gh api -X PATCH repos/OWNER/REPO/issues/comments/<id> -F body=@<fichero>`.
 - **Vive en la issue,** aunque el evento ocurra en el PR.
@@ -365,7 +365,7 @@ No bloquea. Te lo pregunto también en la propuesta.
 </dd></dl>
 </details>
 <details><summary>Contexto · qué se validó y dónde</summary>
-<!-- árbol <huella completa> · base <commit> · evidencias .adw/evidence/issue-N/<n>/ · modelo de cada verificador -->
+<!-- árbol <huella completa> · base <commit> · evidencias .adw/evidence/issue-N/<n>/ · rol y modelo de cada verificador -->
 
 - **Commit validado:** [`<commit corto>`](<enlace>), <sin cambios sin registrar | con cambios sin registrar>
 - **Aplicación:** <cómo se comprobó que servía la copia de trabajo>
