@@ -29,7 +29,12 @@
               <span class="toggle-label sr-only"><%= if (t.Completed) { %>Reabrir<% } else { %>Completar<% } %></span>
             </button>
           </form>
-          <span class="task-title"><%= t.Title %></span>
+          <div class="task-body">
+            <span class="task-title"><%= t.Title %></span>
+            <%= if (t.DueDateText() != "") { %>
+              <p class="task-due">Fecha límite: <time datetime="<%= t.DueDateValue() %>"><%= t.DueDateText() %></time></p>
+            <% } %>
+          </div>
           <%= if (t.Completed) { %>
             <span class="task-status">Completada</span>
           <% } %>

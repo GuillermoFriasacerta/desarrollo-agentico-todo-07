@@ -1,6 +1,6 @@
 # Visión general
 
-Una aplicación web con una sola lista de tareas, sin usuarios ni cuentas. Se pueden añadir tareas, editar su título, marcarlas como completadas o reabrirlas y eliminarlas. Lo que hace cada pantalla está en [features/tareas.md](features/tareas.md).
+Una aplicación web con una sola lista de tareas, sin usuarios ni cuentas. Se pueden añadir tareas, editar su título y su fecha límite, marcarlas como completadas o reabrirlas y eliminarlas. Lo que hace cada pantalla está en [features/tareas.md](features/tareas.md).
 
 ## Stack
 
@@ -37,6 +37,7 @@ Una tabla, `tasks`:
 | `id` | uuid | Clave primaria |
 | `title` | string(200) | Obligatorio; hasta 200 caracteres (`models.TitleMaxLength`) |
 | `completed` | bool | `false` por defecto |
+| `due_date` | date | La fecha límite: solo el día, sin hora. Opcional (`NULL` si no tiene) |
 | `created_at`, `updated_at` | timestamp | Los pone Pop |
 
 Una migración de datos crea tres tareas de ejemplo, una de ellas completada. Solo las crea si no existen.
@@ -48,7 +49,7 @@ Una migración de datos crea tres tareas de ejemplo, una de ellas completada. So
 | `GET` | `/` | `TasksIndex` | La lista y el formulario para añadir |
 | `POST` | `/tasks` | `TasksCreate` | Crea una tarea |
 | `GET` | `/tasks/{task_id}/edit` | `TasksEdit` | El formulario de edición |
-| `PUT` | `/tasks/{task_id}` | `TasksUpdate` | Cambia el título |
+| `PUT` | `/tasks/{task_id}` | `TasksUpdate` | Cambia el título y la fecha límite |
 | `PUT` | `/tasks/{task_id}/toggle` | `TasksToggle` | Alterna entre completada y pendiente |
 | `DELETE` | `/tasks/{task_id}` | `TasksDestroy` | Elimina la tarea |
 | `GET` | `/healthz` | `HealthCheck` | `200 {"status":"ok"}` si responde la base de datos; si no, `503` |
