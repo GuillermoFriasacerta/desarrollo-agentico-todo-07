@@ -39,6 +39,7 @@ type config struct {
 	IntervalSeconds int    `yaml:"interval_seconds"`
 	MaxRejections   int    `yaml:"max_rejections"`
 	MaxParallel     int    `yaml:"max_parallel"`
+	Model           string `yaml:"model"`
 	Prompt          string `yaml:"prompt"`
 }
 
@@ -248,7 +249,12 @@ func (t *trigger) launch(it issue, snapshot json.RawMessage) (bool, error) {
 	}
 	prompt := strings.ReplaceAll(t.cfg.Prompt, "{{payload}}", payload.String())
 
-	agent := exec.Command("claude", "-p", prompt, "--permission-prompts", "none")
+	args := []string{"-p", prompt}
+	// El modelo del coordinador, si config/adw.yml lo fija; si no, el de Claude Code.
+	if model := strings.TrimSpace(t.cfg.Model); model != "" {
+		args = append(args, "--model", model)
+	}
+	agent := exec.Command("claude", append(args, "--permission-prompts", "none")...)
 	agent.Dir = dir
 	// Las variables del worktree, como si se hubiera cargado su .env. Sin tope de espera a los
 	// subagentes en segundo plano: si el coordinador termina su turno mientras uno trabaja,

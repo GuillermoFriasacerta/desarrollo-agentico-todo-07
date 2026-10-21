@@ -37,6 +37,22 @@ El camino de una issue clara hasta el PR es: planificar la verificación y el ca
 
 Todo lo que publica el agente sigue la misma regla: arriba, lo que necesitas ver o hacer; debajo, plegado, el detalle completo, en viñetas y sin identificadores internos. El estado del caso está en un solo comentario, el panel del caso, que el agente edita en su sitio: qué está haciendo, si te toca y dónde está cada cosa, con el historial de ejecuciones y paradas. Solo publica un comentario nuevo cuando tienes algo nuevo que leer, como un plan o un acta, o cuando te toca a ti («Te toca: …»). Al publicar una revisión o un acta oculta como obsoleta la anterior, y al retomar el caso oculta los «te toca» ya resueltos. Ocultar no borra: el comentario queda a un clic y el estado del caso lo sigue leyendo.
 
+## Roles y modelos
+
+El coordinador no improvisa quién hace cada trabajo ni con qué modelo: lo dice el catálogo de [roles](../.claude/skills/adw/references/roles.md), que no nombra ningún arnés.
+
+- **Planifican:** `planner` y `verification-planner`.
+- **Cambian el código o la documentación:** `implementer` y `documenter`.
+- **Verifican:** `checker` (gates y material), `evidence-collector` (afirmaciones automatizadas con evidencia) y `judge` (juicio con rúbrica o refutación).
+
+Cada rol tiene un nivel de modelo, lo que puede tocar y el contexto que no recibe.
+
+El [ejecutor de Claude Code](../.claude/skills/adw/references/executors/claude-code.md) traduce cada rol a un agente de `.claude/agents/`: capaz es `opus`, intermedio, `sonnet`, y ligero, `haiku`. Cada agente lleva sus herramientas y sus skills cargadas. El coordinador puede subir el nivel de un rol en un caso concreto, pero lo apunta en el panel con su motivo, y el panel dice qué rol y qué modelo hizo cada paso. En los logs, cada subagente aparece con su rol en `agent_type`.
+
+Quitar herramientas a un rol no impide que toque el código: con `Write` o con la shell puede reescribir un fichero. Por eso, tras cada rol que no debe cambiar el código, el coordinador comprueba que la huella del árbol no ha cambiado.
+
+Otro arnés necesitaría su propio ejecutor en `references/executors/`, sin tocar la definición.
+
 ## Bucle de corrección
 
 Si la validación rechaza el cambio, el rechazo vuelve al plan como una petición de cambio, con los defectos de todas las dimensiones, y el agente replanifica, implementa y valida de nuevo, sin cederte el turno. El plan de verificación no cambia por un rechazo: lo que se pidió sigue siendo lo que se pidió. Solo tú puedes cambiarlo, con una petición en el PR o una aclaración en la issue.
@@ -95,6 +111,7 @@ label: adw
 interval_seconds: 20
 max_rejections: 3
 max_parallel: 3
+model: opus
 prompt: >-
   /adw {{payload}}
 ```
@@ -104,6 +121,7 @@ prompt: >-
 - `interval_seconds`: espera entre consultas. Las sesiones lanzadas siguen en marcha mientras tanto.
 - `max_rejections`: rechazos seguidos de la verificación, sin intervención humana, tras los que el caso se da por fallido y se te cede el turno. Entero mayor o igual que 1; si se omite, 3. Con 3 hay dos correcciones automáticas; con 1 no hay ninguna. Lo lee la skill directamente de este fichero, así que vale igual cuando la lanza el trigger que cuando escribes `/adw quiero hacer la issue #12`. Cada caso usa el valor de su rama, que lo hereda de la rama por defecto al crearse: para cambiarlo en un caso en curso, cámbialo en su rama. El trigger solo lo valida al arrancar.
 - `max_parallel`: sesiones de `claude -p` a la vez, cada una en el worktree de su caso. Entero mayor o igual que 1; si se omite, 1, de una en una. Cada sesión tiene su PostgreSQL, su aplicación y su navegador: la máquina tiene que dar para tantos entornos.
+- `model`: el modelo de la sesión que coordina cada caso (`claude -p --model`). El catálogo de roles la quiere capaz, y el proyecto pone `opus`. Vacío u omitido, el modelo por defecto de Claude Code. Los subagentes no lo usan: su modelo sale de su rol.
 - `prompt`: texto que recibe Claude. Puede invocar tu propia skill o comando; `{{payload}}` se sustituye por la foto JSON de la issue (`url`, `number`, `title`, `labels`, `assignees` y `updatedAt`). No se evalúa como código de shell.
 
 En forks o con varios remotos, comprueba qué repositorio resolverá `gh` con `gh repo view --json nameWithOwner --jq .nameWithOwner`; no presupongas que será tu fork. El trigger no cambia el repositorio predeterminado ni la configuración Git. Si `gh` no puede resolverlo o falla la consulta, termina sin lanzar Claude.
@@ -162,4 +180,6 @@ La sesión escribe en `.adw/logs/unknown-<n>/` hasta que la skill sabe a qué is
 go test -p 1 ./adws
 ```
 
-Los tests usan `gh`, `git` y `claude` simulados: no consultan GitHub ni ejecutan un agente real. Los tests usan además un `bin/tree` simulado. Comprueban la configuración YAML, `max_rejections` (3 por defecto) y `max_parallel` (1 por defecto), con valores válidos e inválidos, repo opcional o explícito, paradas ante errores de `gh`, la consulta, el filtro por turno del agente, que cada sesión corre en su worktree con las variables de su `.env` y escribe en su log, no en el resumen, que cada consulta deja su línea aunque no encuentre nada, el orden secuencial con `max_parallel: 1`, las sesiones a la vez y su tope, que un caso en marcha no se relanza y uno terminado sí, que un worktree sucio salta su caso sin parar a los demás, el borrado de los worktrees de issues cerradas (no el de una sesión en marcha, y el aviso, una sola vez, si no se pueden borrar), el flag sin prompts de permiso, la espera sin tope a los subagentes, la sustitución literal del prompt y las paradas por error, esperando a las sesiones en marcha. No sustituyen un ensayo completo del workflow hasta el PR.
+Los tests usan `gh`, `git` y `claude` simulados: no consultan GitHub ni ejecutan un agente real. Los tests usan además un `bin/tree` simulado. Comprueban la configuración YAML, `max_rejections` (3 por defecto) y `max_parallel` (1 por defecto), con valores válidos e inválidos, el modelo del coordinador, repo opcional o explícito, paradas ante errores de `gh`, la consulta, el filtro por turno del agente, que cada sesión corre en su worktree con las variables de su `.env` y escribe en su log, no en el resumen, que cada consulta deja su línea aunque no encuentre nada, el orden secuencial con `max_parallel: 1`, las sesiones a la vez y su tope, que un caso en marcha no se relanza y uno terminado sí, que un worktree sucio salta su caso sin parar a los demás, el borrado de los worktrees de issues cerradas (no el de una sesión en marcha, y el aviso, una sola vez, si no se pueden borrar), el flag sin prompts de permiso, la espera sin tope a los subagentes, la sustitución literal del prompt y las paradas por error, esperando a las sesiones en marcha. No sustituyen un ensayo completo del workflow hasta el PR.
+
+`adws/agents_test.go` comprueba además que el catálogo de roles, el ejecutor de Claude Code, los agentes de `.claude/agents/` y el `model` de `config/adw.yml` dicen lo mismo.

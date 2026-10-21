@@ -11,6 +11,10 @@ max_rejections: 3
 # su caso (trees/issue-N). 1 las lanza de una en una.
 max_parallel: 3
 
+# Modelo de la sesión que coordina cada caso (claude -p --model). El catálogo de
+# roles la quiere capaz: opus. Vacío u omitido, el modelo por defecto de Claude Code.
+model: opus
+
 # Invoca el workflow que hayas creado. {{payload}} recibe la foto JSON de cada
 # issue cuyo turno es del agente.
 prompt: >-

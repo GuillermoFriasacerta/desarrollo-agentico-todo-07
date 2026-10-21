@@ -110,7 +110,10 @@ if [[ -f "$TEST_ROOT/issues.$calls" ]]; then cat "$TEST_ROOT/issues.$calls"; els
 `
 	fakeClaude = `#!/usr/bin/env bash
 set -euo pipefail
+model=""
+if [[ $# == 6 && "$3" == --model ]]; then model=$4; set -- "$1" "$2" "$5" "$6"; fi
 [[ $# == 4 && "$1" == -p && "$3" == --permission-prompts && "$4" == none ]] || exit 90
+printf 'MODEL:%s\n' "$model" >> "$TEST_ROOT/models"
 if IFS= read -r unexpected; then exit 91; fi
 [[ "${CLAUDE_CODE_PRINT_BG_WAIT_CEILING_MS:-}" == 0 ]] || exit 92
 printf 'START:%s\n' "$2" >> "$TEST_ROOT/events"
@@ -351,6 +354,28 @@ func TestTriggerCapsParallelSessions(t *testing.T) {
 	}
 	if strings.Count(events, "END:") != 3 || maxOverlap(events) != 2 {
 		t.Fatalf("--once must run every case, never more than max_parallel at once: %q", events)
+	}
+}
+
+func TestTriggerCoordinatorModel(t *testing.T) {
+	cases := []struct {
+		name, body, want string
+	}{
+		{name: "omitted", body: defaultConfig, want: "MODEL:\n"},
+		{name: "configured", body: defaultConfig + "model: opus\n", want: "MODEL:opus\n"},
+		{name: "blank", body: defaultConfig + "model: '  '\n", want: "MODEL:\n"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			root := t.TempDir()
+			r := runTriggerIn(t, root, list(newSnapshot), tc.body, nil, "--once")
+			if r.err != nil {
+				t.Fatalf("%v: %s", r.err, r.output)
+			}
+			if got := readFile(t, filepath.Join(root, "models")); got != tc.want {
+				t.Fatalf("the coordinator must run with the configured model, and without --model if none: want %q, got %q", tc.want, got)
+			}
+		})
 	}
 }
 

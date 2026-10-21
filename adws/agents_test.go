@@ -123,6 +123,13 @@ func TestAgentsMatchTheRoles(t *testing.T) {
 			if _, ok := agents[role]; ok {
 				t.Errorf("coordinator es la sesión que lanza el trigger: no tiene agente")
 			}
+			cfg, err := readConfig("../config/adw.yml")
+			if err != nil {
+				t.Fatal(err)
+			}
+			if cfg.Model != levels[level] {
+				t.Errorf("config/adw.yml: model %q, y el nivel del coordinador (%s) es %q", cfg.Model, level, levels[level])
+			}
 			continue
 		}
 		a, ok := agents[role]
