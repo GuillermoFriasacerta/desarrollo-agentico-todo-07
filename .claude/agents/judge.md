@@ -1,7 +1,7 @@
 ---
 name: judge
 description: Juzga con una rúbrica fijada de antemano, o intenta refutar un hallazgo, en la validación de un caso de adw. Solo lo lanza el coordinador de adw.
-model: opus
+model: sonnet
 tools: Read, Glob, Grep, Bash, Write, Skill
 disallowedTools: Edit
 skills: judge

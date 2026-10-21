@@ -111,7 +111,7 @@ label: adw
 interval_seconds: 20
 max_rejections: 3
 max_parallel: 3
-model: opus
+model: sonnet
 prompt: >-
   /adw {{payload}}
 ```
@@ -121,7 +121,7 @@ prompt: >-
 - `interval_seconds`: espera entre consultas. Las sesiones lanzadas siguen en marcha mientras tanto.
 - `max_rejections`: rechazos seguidos de la verificación, sin intervención humana, tras los que el caso se da por fallido y se te cede el turno. Entero mayor o igual que 1; si se omite, 3. Con 3 hay dos correcciones automáticas; con 1 no hay ninguna. Lo lee la skill directamente de este fichero, así que vale igual cuando la lanza el trigger que cuando escribes `/adw quiero hacer la issue #12`. Cada caso usa el valor de su rama, que lo hereda de la rama por defecto al crearse: para cambiarlo en un caso en curso, cámbialo en su rama. El trigger solo lo valida al arrancar.
 - `max_parallel`: sesiones de `claude -p` a la vez, cada una en el worktree de su caso. Entero mayor o igual que 1; si se omite, 1, de una en una. Cada sesión tiene su PostgreSQL, su aplicación y su navegador: la máquina tiene que dar para tantos entornos.
-- `model`: el modelo de la sesión que coordina cada caso (`claude -p --model`). El catálogo de roles la quiere capaz, y el proyecto pone `opus`. Vacío u omitido, el modelo por defecto de Claude Code. Los subagentes no lo usan: su modelo sale de su rol.
+- `model`: el modelo de la sesión que coordina cada caso (`claude -p --model`). El catálogo de roles pide nivel intermedio, y el proyecto pone `sonnet`. Vacío u omitido, el modelo por defecto de Claude Code. Los subagentes no lo usan: su modelo sale de su rol.
 - `prompt`: texto que recibe Claude. Puede invocar tu propia skill o comando; `{{payload}}` se sustituye por la foto JSON de la issue (`url`, `number`, `title`, `labels`, `assignees` y `updatedAt`). No se evalúa como código de shell.
 
 En forks o con varios remotos, comprueba qué repositorio resolverá `gh` con `gh repo view --json nameWithOwner --jq .nameWithOwner`; no presupongas que será tu fork. El trigger no cambia el repositorio predeterminado ni la configuración Git. Si `gh` no puede resolverlo o falla la consulta, termina sin lanzar Claude.
